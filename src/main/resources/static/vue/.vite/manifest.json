@@ -1,0 +1,61 @@
+{
+  "D:/2026/ota-platform/frontend-vue/src/css/error.css": {
+    "file": "assets/error-hsS-ruTM.css",
+    "src": "D:/2026/ota-platform/frontend-vue/src/css/error.css"
+  },
+  "D:/2026/ota-platform/frontend-vue/src/css/install.css": {
+    "file": "assets/install-kUm0qqbG.css",
+    "src": "D:/2026/ota-platform/frontend-vue/src/css/install.css"
+  },
+  "D:/2026/ota-platform/frontend-vue/src/css/login.css": {
+    "file": "assets/login-D8FKkk6z.css",
+    "src": "D:/2026/ota-platform/frontend-vue/src/css/login.css"
+  },
+  "D:/2026/ota-platform/frontend-vue/src/css/share.css": {
+    "file": "assets/share-CnFkyr6W.css",
+    "src": "D:/2026/ota-platform/frontend-vue/src/css/share.css"
+  },
+  "D:/2026/ota-platform/frontend-vue/src/css/ui.css": {
+    "file": "app/ui-C8s7CQJr.css",
+    "src": "D:/2026/ota-platform/frontend-vue/src/css/ui.css"
+  },
+  "_app-0BYM1eA-.js": {
+    "file": "app/app-0BYM1eA-.js",
+    "name": "app",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-DXRhqCv0.js"
+    ]
+  },
+  "_vendor-DXRhqCv0.js": {
+    "file": "assets/vendor-DXRhqCv0.js",
+    "name": "vendor"
+  },
+  "src/i18n/en.js": {
+    "file": "assets/en-yJjhgQw-.js",
+    "name": "en",
+    "src": "src/i18n/en.js",
+    "isDynamicEntry": true
+  },
+  "src/main.js": {
+    "file": "assets/main-C0kQopZO.js",
+    "name": "main",
+    "src": "src/main.js",
+    "isEntry": true,
+    "imports": [
+      "_vendor-DXRhqCv0.js"
+    ],
+    "dynamicImports": [
+      "src/i18n/en.js",
+      "_app-0BYM1eA-.js",
+      "_app-0BYM1eA-.js"
+    ],
+    "assets": [
+      "app/ui-C8s7CQJr.css",
+      "assets/login-D8FKkk6z.css",
+      "assets/install-kUm0qqbG.css",
+      "assets/error-hsS-ruTM.css",
+      "assets/share-CnFkyr6W.css"
+    ]
+  }
+}

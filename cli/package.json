@@ -1,0 +1,16 @@
+{
+  "name": "ota-platform-cli",
+  "version": "1.0.0",
+  "description": "OTA Platform 命令行：导出、上传、发布、回滚 Expo 热更新",
+  "type": "module",
+  "bin": {
+    "ota": "bin/ota.mjs"
+  },
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "PolyForm-Noncommercial-1.0.0"
+}

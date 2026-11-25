@@ -1,0 +1,12 @@
+target/
+data/
+dist/
+*.log
+.DS_Store
+__pycache__/
+.idea/
+*.iml
+.vscode/
+cli/node_modules/
+frontend-vue/node_modules/
+frontend-vue/dist-ssr/
