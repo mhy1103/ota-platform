@@ -573,6 +573,7 @@ function render(entry, data, url, opts, fam, bootBehaviors) {
             }
             window.scrollTo(0, opts.scroll != null ? opts.scroll : (opts.keep || stay) ? keepY : 0);
             if (opts.reveal) revealCard(opts.reveal);
+            if (fam === 'app' && !soft) settleOffscreen();
         });
     }
 
@@ -580,6 +581,25 @@ function render(entry, data, url, opts, fam, bootBehaviors) {
     root.classList.toggle('render-same', soft);
     return Promise.resolve(apply()).then(function () {
         if (first) reveal();
+    });
+}
+
+/**
+ * 进场动画只给第一屏看得见的元素播，屏幕外的直接放到结束状态：它们看不见，却同样每帧占一个合成层，
+ * 切页时同时跑的太多会把核显压满（144Hz 屏上尤其明显）。一直循环的动画不动
+ */
+function settleOffscreen() {
+    if (!document.getAnimations) return;
+    var h = window.innerHeight, rects = new Map();
+    document.getAnimations().forEach(function (a) {
+        var el = a.effect && a.effect.target;
+        if (!el || a.playState === 'finished' || a.effect.getTiming().iterations === Infinity) return;
+        var r = rects.get(el);
+        if (!r) {
+            r = el.getBoundingClientRect();
+            rects.set(el, r);
+        }
+        if (r.bottom <= 0 || r.top >= h) a.finish();
     });
 }
 

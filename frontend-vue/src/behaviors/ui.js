@@ -2028,9 +2028,11 @@ export default function boot(host) {
                 var step = function (t) {
                     if (!t0) t0 = t;
                     var k = Math.min(1, (t - t0) / dur);
+                    if (k >= 1) el.removeAttribute('data-roll');
                     node.nodeValue = fmt(k < 1 ? target * (1 - Math.pow(1 - k, 3)) : target);
                     if (k < 1) requestAnimationFrame(step);
                 };
+                el.setAttribute('data-roll', '');
                 node.nodeValue = fmt(0);
                 requestAnimationFrame(step);
             });

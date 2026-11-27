@@ -63,7 +63,9 @@
         *{box-sizing:border-box;margin:0;padding:0}
         [hidden]{display:none!important}
         html{-webkit-text-size-adjust:100%;scroll-padding-top:116px}
-        body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;color:var(--ink);background-color:var(--bg);background-image:var(--page-art,none);background-size:var(--page-art-size,auto);background-attachment:fixed;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+        body{font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;color:var(--ink);background-color:var(--bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+        /* 底纹放在一层固定定位的上面，效果和 background-attachment:fixed 一样，但那样写滚动时要回主线程整屏重画 */
+        body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:var(--page-art,none);background-size:var(--page-art-size,auto)}
         a{color:inherit;text-decoration:none}
         button,input,select,textarea{font:inherit;color:inherit}
         ul{list-style:none}

@@ -91,9 +91,10 @@ export default function () {
         }
         return null;
     }
-    // 内容在 span 列宽时刚好显示完整要多高：把里面那张卡片临时设成这个宽度量（卡片自己是宽度查询的容器，窄屏排法跟着变），外层不动
-    function measureAt(pairs) {
-        var G = geo();
+    // 内容在 span 列宽时刚好显示完整要多高：把里面那张卡片临时设成这个宽度量（卡片自己是宽度查询的容器，窄屏排法跟着变），外层不动。
+    // G 由调用方在一次排版里只取一次：每次都读宽度和间距会在改了卡片尺寸之后逼浏览器把整页重新排一遍
+    function measureAt(pairs, G) {
+        G = G || geo();
         if (!G.W) return;
         var passes = [], seen = {};
         pairs.forEach(function (p) {
@@ -106,8 +107,10 @@ export default function () {
             }
         });
         if (!passes.length) return;
-        // 量的时候长列表只算前几条（待处理有几十条也不会把卡片撑得老高），摆好以后列表占满卡片、多的在卡片里滚动
-        board.classList.add('measuring');
+        // 量的时候长列表只算前几条（待处理有几十条也不会把卡片撑得老高），摆好以后列表占满卡片、多的在卡片里滚动。
+        // 一次排版里 pack 已经加上了 measuring 就不再加减：每加减一次整块看板的样式都要重算
+        var own = !board.classList.contains('measuring');
+        if (own) board.classList.add('measuring');
         passes.forEach(function (pass) {
             pass.forEach(function (t, c) {
                 c.style.flex = 'none';
@@ -117,7 +120,7 @@ export default function () {
             pass.forEach(function (t, c) { t[0].nat[t[1]] = c.offsetHeight; });
             pass.forEach(function (t, c) { c.style.flex = ''; c.style.height = ''; c.style.width = ''; });
         });
-        board.classList.remove('measuring');
+        if (own) board.classList.remove('measuring');
     }
     function forget() { items.forEach(function (it) { it.nat = {}; }); }
     // 高度范围：最矮是内容高度，最高按种类；拉过的（fixed）按拉的高度；正在拉的（pin）按指针的高度（按它所在那一列的宽度算范围）
@@ -163,17 +166,23 @@ export default function () {
         var G = geo(), s = screen();
         if (!G.W) return null;
         var src = function (el) { return el === ph ? phSrc : el; };
-        measureAt(list.map(function (el) { return [src(el), spanOf(src(el), s)]; }));
-        var fit = function (e, span) {
-            measureAt([[e.src, span]]);
-            return entry(e.src, span, s, null, e.pin ? e.pinV : null);
-        };
-        var entries = list.map(function (el) {
-            var e = entry(src(el), spanOf(src(el), s), s, el, hold && hold.el === el ? hold.v : null);
-            if (hold && hold.locks && hold.locks.has(el)) e.lock = hold.locks.get(el);
-            return e;
-        });
-        var rows = hold && hold.prev ? packHold(hold.prev, entries, G.g, s.one, fit) : packRows(entries, G.g, s.one, fit, dirty);
+        var own = !board.classList.contains('measuring');
+        if (own) board.classList.add('measuring');
+        try {
+            measureAt(list.map(function (el) { return [src(el), spanOf(src(el), s)]; }), G);
+            var fit = function (e, span) {
+                measureAt([[e.src, span]], G);
+                return entry(e.src, span, s, null, e.pin ? e.pinV : null);
+            };
+            var entries = list.map(function (el) {
+                var e = entry(src(el), spanOf(src(el), s), s, el, hold && hold.el === el ? hold.v : null);
+                if (hold && hold.locks && hold.locks.has(el)) e.lock = hold.locks.get(el);
+                return e;
+            });
+            var rows = hold && hold.prev ? packHold(hold.prev, entries, G.g, s.one, fit) : packRows(entries, G.g, s.one, fit, dirty);
+        } finally {
+            if (own) board.classList.remove('measuring');
+        }
         return { rows: rows, G: G };
     }
 
@@ -215,19 +224,31 @@ export default function () {
         return null;
     }
 
-    // 内容变了（便签、目标表单、换成英文、字体加载完）重新量；拖动、拉伸时先记着，松手再量
-    var stale = false, frame = 0;
+    // 内容变了（便签、目标表单、换成英文、字体加载完）重新量；拖动、拉伸时先记着，松手再量。
+    // cards：只有这几张卡片的内容变了，只重量它们（别的卡片量过的高度还对）；不给就全部重量
+    var stale = false, frame = 0, changed = new Set();
     function busy() { return !!((drag && drag.moved) || sizing); }
-    function soon(remeasure) {
-        if (remeasure) stale = true;
+    function soon(remeasure, cards) {
+        if (remeasure) {
+            if (cards) cards.forEach(function (el) { changed.add(el); });
+            else stale = true;
+        }
         if (frame) return;
         frame = requestAnimationFrame(function () {
             frame = 0;
-            if (busy() || !board.isConnected) return;
+            if (!board.isConnected) return;
+            if (busy()) {
+                if (changed.size) stale = true;
+                changed.clear();
+                return;
+            }
             if (stale) {
                 stale = false;
                 forget();
+            } else {
+                changed.forEach(function (el) { var it = items.get(el); if (it) it.nat = {}; });
             }
+            changed.clear();
             layout('smooth');
         });
     }
@@ -1162,13 +1183,23 @@ export default function () {
     function matters(r) {
         var t = r.target.nodeType === 1 ? r.target : r.target.parentElement;
         if (!t || t === board || t.closest('.bw-edit, .bw-badge, .bw-ph')) return false;
+        // 数字正在从 0 滚到实际值（ui.js 里的 data-roll）：滚到最后一帧再量，中间每帧都量会让整页每帧重排
+        if (r.type === 'characterData' && t.closest('[data-roll]')) return false;
         if (r.type !== 'childList') return true;
         var all = Array.prototype.slice.call(r.addedNodes).concat(Array.prototype.slice.call(r.removedNodes));
         return !all.length || !all.every(ours);
     }
     if (window.MutationObserver) {
         mo = new MutationObserver(function (list) {
-            for (var i = 0; i < list.length; i++) if (matters(list[i])) { soon(true); return; }
+            var cards = new Set();
+            for (var i = 0; i < list.length; i++) {
+                if (!matters(list[i])) continue;
+                var t = list[i].target.nodeType === 1 ? list[i].target : list[i].target.parentElement;
+                var card = t.closest('.bw');
+                if (!card || card.parentNode !== board || !items.has(card)) { soon(true); return; }
+                cards.add(card);
+            }
+            if (cards.size) soon(true, cards);
         });
         mo.observe(board, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'open'] });
     }
